@@ -1,11 +1,10 @@
 ﻿namespace PessoasContatosAPI.Models
 {
-    public class Pessoas
+    public class Contato
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Nome { get; set; }
-        public ContatosCategory Contatos { get; set;}
-
+        public ContatosCategory Tipo { get; set; }
     }
 
     public enum ContatosCategory

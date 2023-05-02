@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PessoasContatosAPI.Models;
 
 namespace PessoasContatosAPI.Data
 {
@@ -11,10 +12,13 @@ namespace PessoasContatosAPI.Data
         {
             IConfiguration configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsetting.json", false, true)
+                .AddJsonFile("appsettings.json", false, true)
                 .Build();
 
             optionsBuilder.UseSqlServer(configuration.GetConnectionString("ServerConnection"));
         }
+
+        public DbSet<Pessoa> Pessoas { get; set; }
+        public DbSet<Contato> Contatos { get; set; }
     }
 }
