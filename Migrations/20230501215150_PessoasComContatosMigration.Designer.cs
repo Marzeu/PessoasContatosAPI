@@ -11,7 +11,7 @@ using PessoasContatosAPI.Data;
 
 namespace PessoasContatosAPI.Migrations
 {
-    [DbContext(typeof(PessoasContext))]
+    [DbContext(typeof(PessoasContatosContext))]
     [Migration("20230501215150_PessoasComContatosMigration")]
     partial class PessoasComContatosMigration
     {

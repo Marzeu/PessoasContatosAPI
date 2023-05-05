@@ -3,8 +3,11 @@
     public class Contato
     {
         public int Id { get; set; }
-        public string Nome { get; set; }
+        public string Valor { get; set; }
         public ContatosCategory Tipo { get; set; }
+
+        public int PessoaId { get; set; }
+        public Pessoa Pessoa { get; set; } 
     }
 
     public enum ContatosCategory

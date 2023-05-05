@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PessoasContatosAPI.Data;
 
@@ -10,9 +11,11 @@ using PessoasContatosAPI.Data;
 namespace PessoasContatosAPI.Migrations
 {
     [DbContext(typeof(PessoasContatosContext))]
-    partial class PessoasContextModelSnapshot : ModelSnapshot
+    [Migration("20230505001514_Refatoracao")]
+    partial class Refatoracao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

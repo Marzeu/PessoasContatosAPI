@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using PessoasContatosAPI.Data;
 using PessoasContatosAPI.Extensions;
 using PessoasContatosAPI.Models;
@@ -13,43 +14,67 @@ namespace PessoasContatosAPI.Controllers
     {
         [HttpGet("api/v1/pessoas")]
         public async Task<IActionResult> GetAsyncPessoas(
-            [FromServices] PessoasContext context)
+            [FromServices] PessoasContatosContext context)
         {
             try
             {
-                var pessoas = await context.Pessoas.ToListAsync();
+                var pessoas = await context.Pessoa.Include(p => p.Contatos).ToListAsync();
+                var pessoasContatosViewModel = pessoas.Select(p => new PessoaContatoViewModel
+                {
+                    Id = p.Id,
+                    Nome = p.Nome,
+                    Contatos = p.Contatos.Select(c => new ContatoViewModel
+                    {
+                        Valor = c.Valor,
+                        Tipo = c.Tipo,
 
-                return Ok(new ResultViewModel<List<Pessoa>>(pessoas));
+                    }).ToList(),
+                });
+
+                return Ok(new ResultViewModel<List<PessoaContatoViewModel>>(pessoasContatosViewModel.ToList()));
             }
             catch
             {
-                return StatusCode(500, new ResultViewModel<List<Pessoa>>("Falha interna no servidor"));
+                return StatusCode(500, new ResultViewModel<List<PessoaContatoViewModel>>("Falha interna no servidor"));
             }
         }
 
         [HttpGet("api/v1/pessoas/{id:int}")]
         public async Task<IActionResult> GetByIdAsyncPessoas(
             [FromRoute] int id,
-            [FromServices] PessoasContext context)
+            [FromServices] PessoasContatosContext context)
         {
             try
             {
-                var pessoas = await context.Pessoas.FirstOrDefaultAsync(p => p.Id == id);
+                var pessoa = await context.Pessoa.FirstOrDefaultAsync(p => p.Id == id);
+                var contatos = await context.Contato.Where(c => c.PessoaId == id).ToListAsync();
 
-                if (pessoas == null) return NotFound(new ResultViewModel<Pessoa>("Pessoa não encontrada"));
+                var pessoasContatosViewModel = new PessoaContatoViewModel
+                {
+                    Id = pessoa.Id,
+                    Nome = pessoa.Nome,
+                    Contatos = pessoa.Contatos.Select(c => new ContatoViewModel
+                    {
+                        Valor = c.Valor,
+                        Tipo = c.Tipo,
 
-                return Ok(new ResultViewModel<Pessoa>(pessoas));
+                    }).ToList(),
+                };
+
+                if (pessoa == null) return NotFound(new ResultViewModel<PessoaContatoViewModel>("Pessoa não encontrada"));
+
+                return Ok(new ResultViewModel<PessoaContatoViewModel>(pessoasContatosViewModel));
             }
             catch
             {
-                return StatusCode(500, new ResultViewModel<Pessoa>("Falha interna no servidor"));
+                return StatusCode(500, new ResultViewModel<PessoaContatoViewModel>("Falha interna no servidor"));
             }
         }
 
-        [HttpPost("pessoas")]
+        [HttpPost("api/v1/pessoa")]
         public async Task<IActionResult> PostAsyncPessoa(
             [FromBody] EditorPessoaViewModel model,
-            [FromServices] PessoasContext context)
+            [FromServices] PessoasContatosContext context)
         {
 
             if (!ModelState.IsValid) return BadRequest(new ResultViewModel<Pessoa>(ModelState.GetErrors()));
@@ -60,16 +85,22 @@ namespace PessoasContatosAPI.Controllers
                 {
                     Id = 0,
                     Nome = model.Nome,
+                    //Contatos = model.Contatos.Select(c => new Contato
+                    //{
+                    //    Valor = c.Valor,
+                    //    Tipo = c.Tipo,
+
+                    //}).ToList(),
                 };
 
-                await context.Pessoas.AddAsync(pessoa);
+                await context.Pessoa.AddAsync(pessoa);
                 await context.SaveChangesAsync();
 
                 return Created($"api/v1/pessoas/{pessoa.Id}", new ResultViewModel<Pessoa>(pessoa));
             }
             catch (DbUpdateException ex)
-            {                    
-                return StatusCode(500, new ResultViewModel<Pessoa>("Não foi incluir a pessoa"));
+            {
+                return StatusCode(500, new ResultViewModel<Pessoa>("Não foi possível incluir a pessoa"));
             }
             catch
             {
@@ -77,21 +108,21 @@ namespace PessoasContatosAPI.Controllers
             }
         }
 
-        [HttpPut("pessoas/{id:int}")]
+        [HttpPut("api/v1/pessoa/{id:int}")]
         public async Task<IActionResult> PutAsyncPessoa(
             [FromRoute] int id,
             [FromBody] EditorPessoaViewModel model,
-            [FromServices] PessoasContext context)
+            [FromServices] PessoasContatosContext context)
         {
             try
             {
-                var pessoa = await context.Pessoas.FirstOrDefaultAsync(p => p.Id == id);
+                var pessoa = await context.Pessoa.FirstOrDefaultAsync(p => p.Id == id);
 
                 if (pessoa == null) return NotFound(new ResultViewModel<Pessoa>("Pessoa não encontrada"));
 
                 pessoa.Nome = model.Nome;
 
-                context.Pessoas.Update(pessoa);
+                context.Pessoa.Update(pessoa);
                 await context.SaveChangesAsync();
 
                 return Ok(new ResultViewModel<Pessoa>(pessoa));
@@ -106,18 +137,18 @@ namespace PessoasContatosAPI.Controllers
             }
         }
 
-        [HttpDelete("api/v1/pessoas/{id:int}")]
+        [HttpDelete("api/v1/pessoa/{id:int}")]
         public async Task<IActionResult> DeleteAsyncPessoa(
                 [FromRoute] int id,
-                [FromServices] PessoasContext context)
+                [FromServices] PessoasContatosContext context)
         {
             try
             {
-                var pessoa = await context.Pessoas.FirstOrDefaultAsync(p => p.Id == id);
+                var pessoa = await context.Pessoa.FirstOrDefaultAsync(p => p.Id == id);
 
                 if (pessoa == null) return NotFound(new ResultViewModel<Pessoa>("Pessoa não encontrada"));
 
-                context.Pessoas.Remove(pessoa);
+                context.Pessoa.Remove(pessoa);
                 await context.SaveChangesAsync();
 
                 return Ok(new ResultViewModel<Pessoa>(pessoa));
@@ -126,7 +157,7 @@ namespace PessoasContatosAPI.Controllers
             {
                 return StatusCode(500, new ResultViewModel<Pessoa>("Não foi possível excluir"));
             }
-            catch 
+            catch
             {
                 return StatusCode(500, new ResultViewModel<Pessoa>("Falha interna no servidor"));
             }
